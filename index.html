@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Envio automático da localização</title>
+</head>
+<body>
+    <h2>Obtendo localização e enviando...</h2>
+    <p id="status">Aguardando permissão...</p>
+
+    <script>
+        function enviarLocalizacao(lat, lon) {
+            // Exemplo usando Webhook.site
+            fetch("https://webhook.site/seu-endereco-aqui", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    latitude: lat,
+                    longitude: lon,
+                    timestamp: new Date().toISOString()
+                })
+            })
+            .then(() => {
+                document.getElementById("status").innerText = "Localização enviada com sucesso!";
+            })
+            .catch((err) => {
+                document.getElementById("status").innerText = "Erro ao enviar: " + err;
+            });
+        }
+
+        function obterLocalizacao() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    document.getElementById("status").innerText = `Latitude: ${lat}, Longitude: ${lon}`;
+
+                    // Envia automaticamente para servidor
+                    enviarLocalizacao(lat, lon);
+                }, function(error) {
+                    document.getElementById("status").innerText = "Erro ao obter localização: " + error.message;
+                });
+            } else {
+                document.getElementById("status").innerText = "Geolocalização não suportada.";
+            }
+        }
+
+        obterLocalizacao();
+    </script>
+</body>
+</html>
